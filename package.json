@@ -9,11 +9,11 @@
   "scripts": {
     "clean": "gulp clean",
     "test": "tape -r dotenv/config -r ts-node/register src/**/*.spec.ts",
+    "build": "yarn clean && webpack -r dotenv/config --mode=production",
     "package": "gulp package",
     "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
     "lint": "tslint -p tsconfig.json",
     "precommit": "yarn format && yarn lint",
-    "build": "yarn clean && yarn test && yarn package ",
     "deploy": "gulp deploy",
     "preversion": "yarn lint && yarn test",
     "version": "yarn format && git add -A .",

@@ -6,7 +6,7 @@ const OUT_DIR = path.resolve(__dirname, 'dist');
 
 const LAMBDA_DIR = path.resolve(SRC_DIR, 'lambda');
 
-module.exports = (env, argv) => ({
+module.exports = {
     entry: {
         tweetPoller: path.resolve(LAMBDA_DIR, 'TwitterTweetPollerHandler.ts'),
     },
@@ -30,4 +30,4 @@ module.exports = (env, argv) => ({
     },
     target: 'node',
     plugins: [new webpack.IgnorePlugin(/^electron$/)]
-});
+};

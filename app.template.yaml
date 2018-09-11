@@ -1,0 +1,125 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Parameters:
+  EncryptedApiKey:
+    Type: String
+    Default: ''
+    Description: Encrypted Twitter Consumer API Key encrypted ciphertext blob as a base64-encoded string.
+  EncryptedApiSecretKey:
+    Type: String
+    Default: ''
+    Description: Encrypted Twitter Consumer API Secret Key encrypted ciphertext blob as a base64-encoded string.
+  DecryptionKeyName:
+    Type: String
+    Default: invalid
+    Description:
+      KMS key name of the key used to encrypt the Twitter Consumer API Keys. Note, this must be just the key name (UUID), not the full key ARN. It's assumed the key is owned by the same account, in the same region as the app.
+  PlainTextApiKey:
+    Type: String
+    Default: ''
+    Description: Consumer API Key in plain text.
+  PlainTextApiSecretKey:
+    Type: String
+    Default: ''
+    Description: Consumer API Secret Key in plain text.
+  ProcessorFunctionName:
+    Type: String
+    Description:
+      Name of lambda function that should be invoked to process tweets. Note, this must be a function name and not a function ARN.
+  SearchQuery:
+    Type: String
+    Description: Search query to be passed to Twitter to select tweets to use for the event source.
+  AdditionalParameters:
+    Type: String
+    Default: ''
+    Description: Additional parameters to be added to the API call. This should be in query string format.
+  PollingFrequencyInMinutes:
+    Type: Number
+    MinValue: 1
+    Default: 5
+    Description: Frequency in minutes to poll for new tweets.
+  PollTimeout:
+    Type: Number
+    MinValue: 1
+    Default: 30
+    Description: Maximum time in seconds to spend on a single polling session.
+  PerRequestTimeout:
+    Type: Number
+    MinValue: 1
+    Default: 1500
+    Description: Milliseconds before any given request to the Twitter API will timeout and give up.
+  LoggingLevel:
+    Type: String
+    Default: error
+    AllowedValues:
+      - error
+      - warn
+      - info
+      - verbose
+      - debug
+      - silly
+    Description: (Optional) The level of logging desired (error, warn, info, verbose, debug or silly).
+
+Conditions:
+  IsPollingFrequencyInMinutesSingular: !Equals [!Ref PollingFrequencyInMinutes, 1]
+
+Resources:
+  TwitterTweetPoller:
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: nodejs8.10
+      CodeUri: ./dist/tweetPoller.js
+      Handler: tweetPoller.handler
+      Tracing: Active
+      MemorySize: 512
+      Timeout: !Ref PollTimeout
+      Policies:
+        - LambdaInvokePolicy:
+            FunctionName: !Ref ProcessorFunctionName
+        - DynamoDBCrudPolicy:
+            TableName: !Ref PollingCheckpoint
+        - KMSDecryptPolicy:
+            KeyId: !Ref DecryptionKeyName
+      Environment:
+        Variables:
+          LOGGING_LEVEL: !Ref LoggingLevel
+          ENCRYPTED_CONSUMER_API_KEY: !Ref EncryptedApiKey
+          ENCRYPTED_CONSUMER_API_SECRET_KEY: !Ref EncryptedApiSecretKey
+          CONSUMER_API_KEY: !Ref PlainTextApiKey
+          CONSUMER_API_SECRET_KEY: !Ref PlainTextApiSecretKey
+          SEARCH_QUERY: !Ref SearchQuery
+          ADDITIONAL_PARAMETERS: !Ref AdditionalParameters
+          PER_REQUEST_TIMEOUT: !Ref PerRequestTimeout
+          POLLING_CHECKPOINT_TABLE_NAME: !Ref PollingCheckpoint
+          PROCESSOR_FUNCTION_NAME: !Ref ProcessorFunctionName
+      Events:
+        Timer:
+          Type: Schedule
+          Properties:
+            Schedule:
+              !If [
+                IsPollingFrequencyInMinutesSingular,
+                !Sub 'rate(${PollingFrequencyInMinutes} minute)',
+                !Sub 'rate(${PollingFrequencyInMinutes} minutes)',
+              ]
+
+  PollingCheckpoint:
+    Type: AWS::Serverless::SimpleTable
+
+Outputs:
+  TwitterTweetPollerFunctionName:
+    Value: !Ref TwitterTweetPoller
+    Export:
+      Name: !Sub ${AWS::StackName}-TwitterTweetPollerFunctionName
+  TwitterTweetPollerFunctionArn:
+    Value: !GetAtt TwitterTweetPoller.Arn
+    Export:
+      Name: !Sub ${AWS::StackName}-TwitterTweetPollerFunctionArn
+  PollingCheckpointTableName:
+    Value: !Ref PollingCheckpoint
+    Export:
+      Name: !Sub ${AWS::StackName}-PollingCheckpointTableName
+  PollingCheckpointTableArn:
+    Value: !GetAtt PollingCheckpoint.Arn
+    Export:
+      Name: !Sub ${AWS::StackName}-PollingCheckpointTableArn
