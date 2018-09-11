@@ -1,0 +1,49 @@
+{
+  "name": "aws-serverless-tweet-event-source",
+  "version": "0.0.0",
+  "description": "A serverless app that periodically polls the public Twitter API with a predefined search query and invokes a given lambda function to process new tweets.",
+  "main": "index.js",
+  "author": "William Weiss <william@codification.org>",
+  "license": "MIT",
+  "private": false,
+  "scripts": {
+    "clean": "gulp clean",
+    "test": "tape -r dotenv/config -r ts-node/register src/**/*.spec.ts",
+    "package": "gulp package",
+    "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
+    "lint": "tslint -p tsconfig.json",
+    "precommit": "yarn format && yarn lint",
+    "build": "yarn clean && yarn test && yarn package ",
+    "deploy": "gulp deploy",
+    "preversion": "yarn lint && yarn test",
+    "version": "yarn format && git add -A .",
+    "postversion": "git push && git push --tags"
+  },
+  "dependencies": {
+    "@codificationorg/commons-core": "^2.0.0",
+    "got": "^8.3.0",
+    "rxjs": "^5.5.10"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.1",
+    "@types/dotenv": "^4.0.3",
+    "@types/got": "^8.3.0",
+    "@types/node": "^9.6.6",
+    "@types/tape": "^4.2.32",
+    "aws-lambda": "^0.1.2",
+    "aws-sdk": "^2.226.1",
+    "del": "^3.0.0",
+    "dotenv": "^6.0.0",
+    "gulp": "^4.0.0",
+    "gulp-run-command": "^0.0.9",
+    "prettier": "^1.14.0",
+    "tape": "^4.9.0",
+    "ts-loader": "^4.4.2",
+    "ts-node": "^6.0.0",
+    "tslint": "^5.9.1",
+    "tslint-config-prettier": "^1.14.0",
+    "typescript": "^2.8.3",
+    "webpack": "^4.16.4",
+    "webpack-cli": "^3.1.0"
+  }
+}
