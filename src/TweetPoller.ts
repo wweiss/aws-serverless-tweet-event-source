@@ -38,20 +38,21 @@ export class TweetPoller {
   public doPoll(): Observable<any[]> {
     return forkJoin(this.getLastestTweets(), this.checkpoint.getLastTweetDate()).pipe(
       flatMap(results => {
-        const sortedTweets = this.sortTweets(results[0]);
-        Logger.debug('Recieved tweets: ', sortedTweets.length);
         const lastTweetDate = results[1];
         Logger.debug(`Received previous last tweet date: ${new Date(lastTweetDate).toUTCString()}`);
-        const currentLatestTweetDate = Date.parse(sortedTweets[0].created_at);
-        Logger.debug(`Current last tweet date: ${new Date(currentLatestTweetDate).toUTCString()}`);
 
-        if (currentLatestTweetDate <= lastTweetDate) {
-          Logger.debug('Exiting, no changes detected.');
+        Logger.debug('Total tweets: ', results.length);
+        const newTweets = this.sortTweets(results[0]).filter(tweet => Date.parse(tweet.created_at) > lastTweetDate);
+        Logger.debug('New tweets: ', newTweets.length);
+
+        if (newTweets.length < 1) {
+          Logger.debug('Exiting, no new tweets detected.');
           return new EmptyObservable();
         } else {
-          Logger.debug('Updating checkpoint.');
+          const currentLatestTweetDate = Date.parse(newTweets[0].created_at);
+          Logger.debug(`Updating checkpoint timestamp: ${new Date(currentLatestTweetDate).toUTCString()}`);
           this.checkpoint.setLastTweetDate(currentLatestTweetDate);
-          return of(sortedTweets);
+          return of(newTweets);
         }
       }),
     );
