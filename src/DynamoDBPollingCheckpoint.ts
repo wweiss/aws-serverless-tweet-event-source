@@ -24,14 +24,14 @@ export class DynamoDBPollingCheckpoint implements PollingCheckpoint {
       },
       TableName: AppConfig.instance.tableName,
     };
-    return Observable.create((observer: Observer<string>) => {
+    return Observable.create((observer: Observer<number>) => {
       DB.getItem(params, (err, data) => {
         if (err) {
           observer.error(err);
         } else if (data.Item) {
-          observer.next(data.Item[CHECKPOINT_ATTRIBUTE].N);
+          observer.next(+data.Item[CHECKPOINT_ATTRIBUTE].N);
         } else {
-          observer.next('');
+          observer.next(-1);
         }
         observer.complete();
       });
