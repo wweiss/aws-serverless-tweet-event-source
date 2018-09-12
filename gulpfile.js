@@ -8,9 +8,9 @@ const vars = {
   stackName: process.env.STACK_NAME,
   artifactBucket: process.env.ARTIFACT_BUCKET,
   searchQuery: process.env.SEARCH_QUERY,
-  listingProcessor: process.env.LISTING_PROCESSOR_FUNCTION_NAME,
-  apiKey: process.env.CONSUMER_API_KEY,
-  apiSecretKey: process.env.CONSUMER_API_SECRET_KEY
+  listingProcessorFunctionName: process.env.LISTING_PROCESSOR_FUNCTION_NAME,
+  consumerApiKey: process.env.CONSUMER_API_KEY,
+  consumerApiSecretKey: process.env.CONSUMER_API_SECRET_KEY
 };
 
 const paths = {
@@ -49,9 +49,9 @@ const deployCloudformation = () => {
 --template-file ${paths.tmp}/packaged-sam.yaml \
 --stack-name ${vars.stackName} \
 --parameter-overrides \
-PlainTextApiKey=${vars.apiKey} \
-PlainTextApiSecretKey=${vars.apiSecretKey} \
-ListingProcessorFunctionName=${vars.listingProcessor} \
+ConsumerApiKey=${vars.consumerApiKey} \
+ConsumerApiSecretKey=${vars.consumerApiSecretKey} \
+ListingProcessorFunctionName=${vars.listingProcessorFunctionName} \
 SearchQuery=${vars.searchQuery} \
 --capabilities CAPABILITY_IAM \
 --no-fail-on-empty-changeset`)();
