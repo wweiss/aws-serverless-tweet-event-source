@@ -10,7 +10,7 @@ import { TweetPoller } from './TweetPoller';
 const Logger = LoggerFactory.getLogger();
 
 test('TweetPoller Unit Tests', assert => {
-  assert.plan(3);
+  assert.plan(4);
 
   const checkpoint = new MockPollingCheckpoint();
   const processor = new MockTweetProcessor(assert);
@@ -20,7 +20,12 @@ test('TweetPoller Unit Tests', assert => {
     tweets => {
       Logger.info(`Received results: ${JSON.stringify(tweets, null, 2)}`);
 
-      assert.ok(tweets && tweets.length > 0, 'can get find and return tweets.');
+      assert.ok(tweets.length > 1, 'returns more than one tweet.');
+
+      const first = tweets[0];
+      const last = tweets[tweets.length - 1];
+      assert.ok(Date.parse(first.created_at) > Date.parse(last.created_at), 'properly sorts from newest to oldest.');
+
       assert.ok(checkpoint.lastTweetDate > -1, 'properly sets latest tweet date.');
 
       const lastTweetDate = checkpoint.lastTweetDate;

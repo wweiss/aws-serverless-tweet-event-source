@@ -94,6 +94,6 @@ export class TweetPoller {
   }
 
   private sortTweets(tweets: any[]): any[] {
-    return tweets.sort((a, b) => Date.parse(a.created_at) - Date.parse(b.created_at));
+    return tweets.sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
   }
 }
