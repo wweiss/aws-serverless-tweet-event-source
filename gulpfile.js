@@ -8,7 +8,7 @@ const vars = {
   stackName: process.env.STACK_NAME,
   artifactBucket: process.env.ARTIFACT_BUCKET,
   searchQuery: process.env.SEARCH_QUERY,
-  listingProcessorFunctionName: process.env.LISTING_PROCESSOR_FUNCTION_NAME,
+  processorFunctionName: process.env.PROCESSOR_FUNCTION_NAME,
   consumerApiKey: process.env.CONSUMER_API_KEY,
   consumerApiSecretKey: process.env.CONSUMER_API_SECRET_KEY
 };
@@ -41,7 +41,7 @@ const packageCloudFormation = () => {
 }
 exports.packageCloudFormation = packageCloudFormation;
 
-const package = gulp.series(packageCloudFormation);
+const package = gulp.series(configureTemp, packageCloudFormation);
 exports.package = package;
 
 const deployCloudformation = () => {
@@ -51,8 +51,8 @@ const deployCloudformation = () => {
 --parameter-overrides \
 ConsumerApiKey=${vars.consumerApiKey} \
 ConsumerApiSecretKey=${vars.consumerApiSecretKey} \
-ListingProcessorFunctionName=${vars.listingProcessorFunctionName} \
-SearchQuery=${vars.searchQuery} \
+ProcessorFunctionName=${vars.processorFunctionName} \
+"SearchQuery=${vars.searchQuery}" \
 --capabilities CAPABILITY_IAM \
 --no-fail-on-empty-changeset`)();
 }
