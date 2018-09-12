@@ -133,7 +133,7 @@ export class AppConfig {
     let rval: Observable<string>;
     const encKeyVarName = `${EnvVar.encryptedPrefix}${keyVarName}`;
     if (Config.get(encKeyVarName)) {
-      rval = this.decryptKey(keyName, encKeyVarName);
+      rval = this.decryptKey(keyName, Config.get(encKeyVarName));
     } else if (Config.get(keyVarName)) {
       rval = of(Config.get(keyVarName));
     } else {
