@@ -7,9 +7,10 @@ const run = require('gulp-run-command').default;
 const vars = {
   stackName: process.env.STACK_NAME,
   artifactBucket: process.env.ARTIFACT_BUCKET,
-  shopId: process.env.SHOP_ID,
+  searchQuery: process.env.SEARCH_QUERY,
   listingProcessor: process.env.LISTING_PROCESSOR_FUNCTION_NAME,
-  apiKey: process.env.PLAINTEXT_API_KEY
+  apiKey: process.env.CONSUMER_API_KEY,
+  apiSecretKey: process.env.CONSUMER_API_SECRET_KEY
 };
 
 const paths = {
@@ -49,8 +50,9 @@ const deployCloudformation = () => {
 --stack-name ${vars.stackName} \
 --parameter-overrides \
 PlainTextApiKey=${vars.apiKey} \
+PlainTextApiSecretKey=${vars.apiSecretKey} \
 ListingProcessorFunctionName=${vars.listingProcessor} \
-ShopId=${vars.shopId} \
+SearchQuery=${vars.searchQuery} \
 --capabilities CAPABILITY_IAM \
 --no-fail-on-empty-changeset`)();
 }
