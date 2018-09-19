@@ -84,6 +84,8 @@ export class TweetPoller {
             .then(resp => {
               if (resp.body.statuses && resp.body.statuses.length > 0) {
                 observer.next(resp.body.statuses);
+              }else{
+                Logger.debug('Did not receive any results: %j',resp.body)
               }
               observer.complete();
             })
