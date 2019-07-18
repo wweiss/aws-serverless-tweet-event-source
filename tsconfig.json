@@ -9,5 +9,5 @@
     "lib": ["es6", "dom"]
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "src/**/*.spec.ts"]
+  "exclude": ["node_modules", "src/**/*.spec.ts","src/**/*.mock.*"]
 }

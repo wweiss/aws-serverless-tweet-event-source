@@ -1,10 +1,15 @@
+import * as fs from 'fs';
+import * as path from 'path';
 import { Observable } from 'rxjs/Observable';
 import { of } from 'rxjs/observable/of';
+import { Observer } from 'rxjs/Observer';
 import * as test from 'tape';
 
 import { LoggerFactory } from '@codificationorg/commons-core';
 
 import { PollingCheckpoint, TweetProcessor } from './';
+import { APIGateway } from './APIGateway';
+import { AppConfig } from './AppConfig';
 import { TweetPoller } from './TweetPoller';
 
 const Logger = LoggerFactory.getLogger();
@@ -12,9 +17,11 @@ const Logger = LoggerFactory.getLogger();
 test('TweetPoller Unit Tests', assert => {
   assert.plan(4);
 
+  const config = AppConfig.instance;
+  const apiGateway = new MockAPIGateway();
   const checkpoint = new MockPollingCheckpoint();
   const processor = new MockTweetProcessor(assert);
-  const poller = new TweetPoller(checkpoint, processor);
+  const poller = new TweetPoller(config, apiGateway, checkpoint, processor);
 
   poller.doPoll().subscribe(
     tweets => {
@@ -36,6 +43,24 @@ test('TweetPoller Unit Tests', assert => {
     err => Logger.error('Polling encountered an error: ', err),
   );
 });
+
+class MockAPIGateway implements APIGateway {
+  private readonly MOCK_FILE_PATH = path.resolve(__dirname, 'TwitterAPIResponse.mock.json');
+  public callAPI(url: string, query?: string): Observable<any[]> {
+    return Observable.create((observer: Observer<any[]>) => {
+      fs.readFile(this.MOCK_FILE_PATH, { encoding: 'utf8' }, (err: Error, data: string) => {
+        if (err) {
+          // tslint:disable-next-line: no-console
+          console.error(err);
+          observer.error(err);
+        } else {
+          observer.next(JSON.parse(data).statuses);
+          observer.complete();
+        }
+      });
+    });
+  }
+}
 
 class MockPollingCheckpoint implements PollingCheckpoint {
   public lastTweetDate: number = -1;
