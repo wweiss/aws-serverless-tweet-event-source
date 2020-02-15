@@ -36,9 +36,13 @@ test('TweetPoller Unit Tests', assert => {
       assert.ok(checkpoint.lastTweetDate > -1, 'properly sets latest tweet date.');
 
       const lastTweetDate = checkpoint.lastTweetDate;
-      poller.doPoll().subscribe(() => assert.fail('no tweets should return without updates.'), null, () => {
-        assert.equal(checkpoint.lastTweetDate, lastTweetDate, 'latest date only updates when there are new tweets.');
-      });
+      poller.doPoll().subscribe(
+        () => assert.fail('no tweets should return without updates.'),
+        null,
+        () => {
+          assert.equal(checkpoint.lastTweetDate, lastTweetDate, 'latest date only updates when there are new tweets.');
+        },
+      );
     },
     err => Logger.error('Polling encountered an error: ', err),
   );
