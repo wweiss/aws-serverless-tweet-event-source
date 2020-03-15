@@ -1,8 +1,6 @@
+import { LoggerFactory } from '@codification/cutwater-logging';
 import { Lambda } from 'aws-sdk';
 import { InvocationRequest } from 'aws-sdk/clients/lambda';
-
-import { Logger, LoggerFactory } from '@codificationorg/commons-core';
-
 import { TweetProcessor } from './';
 import { AppConfig } from './AppConfig';
 

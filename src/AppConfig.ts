@@ -1,12 +1,8 @@
+import { Config } from '@codification/cutwater-core';
+import { LoggerFactory } from '@codification/cutwater-logging';
 import { KMS } from 'aws-sdk';
+import { DecryptResponse } from 'aws-sdk/clients/kms';
 import * as got from 'got';
-import { Observable } from 'rxjs/Observable';
-import { forkJoin } from 'rxjs/observable/forkJoin';
-import { of } from 'rxjs/observable/of';
-import { Observer } from 'rxjs/Observer';
-import { flatMap, map } from 'rxjs/operators';
-
-import { Config, LoggerFactory } from '@codificationorg/commons-core';
 
 export enum EnvVar {
   searchQuery = 'SEARCH_QUERY',
@@ -39,12 +35,9 @@ export class AppConfig {
 
   private constructor() {
     Logger.info('Initializing config...');
-    this.bearerToken.subscribe(
-      () => Logger.info('Config is ready.'),
-      err => {
-        throw new Error(`Configuration failed to initialized: ${JSON.stringify(err, null, 2)}`);
-      },
-    );
+    this.getBearerToken()
+      .then(() => Logger.info('Config is ready.'))
+      .catch(err => new Error(`Configuration failed to initialized: ${JSON.stringify(err, null, 2)}`));
   }
 
   public get searchQuery(): string {
@@ -67,20 +60,18 @@ export class AppConfig {
     return Config.get(EnvVar.pollingCheckpointTable);
   }
 
-  public get bearerToken(): Observable<string> {
-    let rval: Observable<string>;
+  public async getBearerToken(): Promise<string> {
     if (!this.cachedBearerToken) {
-      rval = this.consumerCredentials.pipe(flatMap(creds => this.fetchBearerToken(creds)));
+      return await this.fetchBearerToken(await this.getConsumerCredentials());
     } else {
-      rval = of(this.cachedBearerToken);
+      return this.cachedBearerToken;
     }
-    return rval;
   }
 
-  private fetchBearerToken(creds: ConsumerCredentials): Observable<string> {
-    const bearerCreds = Buffer.from(`${encodeURIComponent(creds.apiKey)}:${encodeURIComponent(creds.apiSecretKey)}`).toString(
-      'base64',
-    );
+  private async fetchBearerToken(creds: ConsumerCredentials): Promise<string> {
+    const bearerCreds = Buffer.from(
+      `${encodeURIComponent(creds.apiKey)}:${encodeURIComponent(creds.apiSecretKey)}`,
+    ).toString('base64');
     const options: got.GotBodyOptions<string> = {
       body: 'grant_type=client_credentials',
       headers: {
@@ -88,76 +79,57 @@ export class AppConfig {
         'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
       },
     };
-    return Observable.create((observer: Observer<string>) => {
-      Logger.info('Requesting Twitter bearer token...');
-      got
-        .post('https://api.twitter.com/oauth2/token', options)
-        .then(response => {
-          const auth: AuthResponse = JSON.parse(response.body);
-          if (auth.token_type === 'bearer') {
-            Logger.info('Twitter bearer token received and ready.');
-            this.cachedBearerToken = auth.access_token;
-            observer.next(this.cachedBearerToken);
-            observer.complete();
-          } else {
-            observer.error('Received wrong type of token from Twitter.');
-          }
-        })
-        .catch(err => observer.error(err));
-    });
-  }
+    Logger.info('Requesting Twitter bearer token...');
+    const response = await got.post('https://api.twitter.com/oauth2/token', options);
 
-  private get consumerCredentials(): Observable<ConsumerCredentials> {
-    if (this.cachedCredentials) {
-      return of(this.cachedCredentials);
+    const auth: AuthResponse = JSON.parse(response.body);
+    if (auth.token_type === 'bearer') {
+      Logger.info('Twitter bearer token received and ready.');
+      this.cachedBearerToken = auth.access_token;
+      return this.cachedBearerToken;
     } else {
-      Logger.info('Preparing consumer credentials.');
-      const tasks: Array<Observable<string>> = [
-        this.toApiKey('Consumer API Key', EnvVar.consumerApiKey),
-        this.toApiKey('Consumer API Secret Key', EnvVar.consumerApiSecretKey),
-      ];
-      return forkJoin(tasks).pipe(
-        map(results => {
-          this.cachedCredentials = {
-            apiKey: results[0],
-            apiSecretKey: results[1],
-          };
-          Logger.info('Consumer credentials ready.');
-          return this.cachedCredentials;
-        }),
-      );
+      throw new Error('Received wrong type of token from Twitter.');
     }
   }
 
-  private toApiKey(keyName: string, keyVarName: string): Observable<string> {
-    let rval: Observable<string>;
+  private async getConsumerCredentials(): Promise<ConsumerCredentials> {
+    if (this.cachedCredentials) {
+      return this.cachedCredentials;
+    } else {
+      Logger.info('Preparing consumer credentials.');
+      const tasks: Array<Promise<string>> = [
+        this.toApiKey('Consumer API Key', EnvVar.consumerApiKey),
+        this.toApiKey('Consumer API Secret Key', EnvVar.consumerApiSecretKey),
+      ];
+      const results = await Promise.all(tasks);
+      this.cachedCredentials = {
+        apiKey: results[0],
+        apiSecretKey: results[1],
+      };
+      Logger.info('Consumer credentials ready.');
+      return this.cachedCredentials;
+    }
+  }
+
+  private async toApiKey(keyName: string, keyVarName: string): Promise<string> {
+    let rval: string;
     const encKeyVarName = `${EnvVar.encryptedPrefix}${keyVarName}`;
     if (Config.get(encKeyVarName)) {
-      rval = this.decryptKey(keyName, Config.get(encKeyVarName));
+      rval = await this.decryptKey(keyName, Config.get(encKeyVarName));
     } else if (Config.get(keyVarName)) {
-      rval = of(Config.get(keyVarName));
+      rval = Config.get(keyVarName);
     } else {
       throw new Error(`Missing required api credential: ${keyVarName} or ${encKeyVarName}`);
     }
     return rval;
   }
 
-  private decryptKey(keyName: string, encryptedKey: string): Observable<string> {
+  private async decryptKey(keyName: string, encryptedKey: string): Promise<string> {
     const kms = new KMS();
     const params = {
       CiphertextBlob: new Buffer(encryptedKey, 'base64'),
     };
-    return Observable.create((observer: Observer<string>) => {
-      Logger.info(`Decrypting '${keyName}'...`);
-      kms.decrypt(params, (err, data) => {
-        if (err) {
-          observer.error(err);
-        } else {
-          Logger.info('Decrypted.');
-          observer.next(data.Plaintext.toString());
-          observer.complete();
-        }
-      });
-    });
+    const data: DecryptResponse = await kms.decrypt(params).promise();
+    return !!data.Plaintext ? data.Plaintext?.toString() : '';
   }
 }

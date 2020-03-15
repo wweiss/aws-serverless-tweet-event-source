@@ -1,10 +1,6 @@
+import { LoggerFactory } from '@codification/cutwater-logging';
 import { DynamoDB } from 'aws-sdk';
-import { PutItemInput } from 'aws-sdk/clients/dynamodb';
-import { Observable } from 'rxjs/Observable';
-import { Observer } from 'rxjs/Observer';
-
-import { Logger, LoggerFactory } from '@codificationorg/commons-core';
-
+import { GetItemOutput, PutItemInput } from 'aws-sdk/clients/dynamodb';
 import { PollingCheckpoint } from './';
 import { AppConfig } from './AppConfig';
 
@@ -15,7 +11,7 @@ const TIMESTAMP_KEY = 'CHECKPOINT_TIMESTAMP';
 const DB: DynamoDB = new DynamoDB();
 
 export class DynamoDBPollingCheckpoint implements PollingCheckpoint {
-  public getLastTweetDate(): Observable<number> {
+  public async getLastTweetDate(): Promise<number> {
     const params = {
       Key: {
         id: {
@@ -24,18 +20,12 @@ export class DynamoDBPollingCheckpoint implements PollingCheckpoint {
       },
       TableName: AppConfig.instance.tableName,
     };
-    return Observable.create((observer: Observer<number>) => {
-      DB.getItem(params, (err, data) => {
-        if (err) {
-          observer.error(err);
-        } else if (data.Item) {
-          observer.next(+data.Item[CHECKPOINT_ATTRIBUTE].N);
-        } else {
-          observer.next(-1);
-        }
-        observer.complete();
-      });
-    });
+    const data: GetItemOutput = await DB.getItem(params).promise();
+    if (!!data.Item && !!data.Item[CHECKPOINT_ATTRIBUTE] && !!data.Item[CHECKPOINT_ATTRIBUTE].N) {
+      return +(data.Item[CHECKPOINT_ATTRIBUTE].N || '0');
+    } else {
+      return -1;
+    }
   }
 
   public setLastTweetDate(timestamp: number): void {

@@ -1,12 +1,7 @@
-import { Observable } from 'rxjs/Observable';
-import { Observer } from 'rxjs/Observer';
-
-import { Logger, LoggerFactory } from '@codificationorg/commons-core';
-
+import { LoggerFactory } from '@codification/cutwater-logging';
+import { default as got } from 'got';
 import { APIGateway } from './APIGateway';
 import { AppConfig } from './AppConfig';
-
-import got = require('got');
 
 const Logger = LoggerFactory.getLogger();
 
@@ -19,33 +14,23 @@ export class TwitterAPIGateway implements APIGateway {
     this.config = config;
   }
 
-  public callAPI(url: string, query?: string): Observable<any[]> {
+  public async callAPI(url: string, query?: string): Promise<any[] | undefined> {
     const baseUrl = `${this.urlBase}${url}`;
-    return Observable.create((observer: Observer<any[]>) => {
-      this.config.bearerToken.subscribe(
-        token => {
-          const options: got.GotJSONOptions = {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-            json: true,
-            query,
-            timeout: this.config.perRequestTimeout,
-          };
-          Logger.debug('Calling api url: ', baseUrl);
-          got(`${baseUrl}`, options)
-            .then(resp => {
-              if (resp.body.statuses && resp.body.statuses.length > 0) {
-                observer.next(resp.body.statuses);
-              } else {
-                Logger.debug('Did not receive any results: %j', resp.body);
-              }
-              observer.complete();
-            })
-            .catch(err => observer.error(err));
-        },
-        err => observer.error(err),
-      );
-    });
+    const token = await this.config.getBearerToken();
+    const options: got.GotJSONOptions = {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      json: true,
+      query,
+      timeout: this.config.perRequestTimeout,
+    };
+    Logger.debug('Calling api url: ', baseUrl);
+    const resp = await got(`${baseUrl}`, options);
+    if (resp.body.statuses && resp.body.statuses.length > 0) {
+      return resp.body.statuses;
+    } else {
+      Logger.debug('Did not receive any results: ', resp.body);
+    }
   }
 }

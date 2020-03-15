@@ -1,7 +1,5 @@
-import { Observable } from 'rxjs/Observable';
-
 export interface PollingCheckpoint {
-  getLastTweetDate(): Observable<number>;
+  getLastTweetDate(): Promise<number>;
   setLastTweetDate(timestamp: number): void;
 }
 
