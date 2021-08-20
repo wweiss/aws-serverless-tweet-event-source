@@ -40,7 +40,7 @@ export class DynamoDBPollingCheckpoint implements PollingCheckpoint {
       },
       TableName: AppConfig.instance.tableName,
     };
-    DB.putItem(params, (err, data) => {
+    DB.putItem(params, err => {
       if (err) {
         Logger.error('Error while updating checkpoint teimstamp: ', err);
       } else {

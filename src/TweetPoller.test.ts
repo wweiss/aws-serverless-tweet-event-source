@@ -11,13 +11,13 @@ const Logger = LoggerFactory.getLogger();
 // tslint:disable: max-classes-per-file
 class MockAPIGateway implements APIGateway {
   private readonly MOCK_FILE_PATH = path.resolve(__dirname, 'TwitterAPIResponse.mock.json');
-  public callAPI(url: string, query?: string): Promise<any[]> {
+  public callAPI(): Promise<any[]> {
     return JSON.parse(fs.readFileSync(this.MOCK_FILE_PATH, { encoding: 'utf8' })).statuses;
   }
 }
 
 class MockPollingCheckpoint implements PollingCheckpoint {
-  public lastTweetDate: number = -1;
+  public lastTweetDate = -1;
 
   constructor(lastTweetDate?: number) {
     if (lastTweetDate) {
