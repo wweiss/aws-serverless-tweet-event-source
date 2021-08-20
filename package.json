@@ -23,6 +23,9 @@
     "version": "git add -A .",
     "postversion": "git push && git push --tags"
   },
+  "resolutions": {
+    "glob-parent": "^5.1.2"
+  },
   "dependencies": {
     "@codification/cutwater-core": "^0.x",
     "@codification/cutwater-logging": "^0.x",
