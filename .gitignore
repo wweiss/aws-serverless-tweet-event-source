@@ -1,24 +1,3 @@
-Skip to content
-Search or jump to…
-
-Pull requests
-Issues
-Marketplace
-Explore
- 
-@wweiss 
-wweiss
-/
-comix
-Private
-1
-00
- Code Issues 0 Pull requests 0 Actions Projects 0 Wiki Security Insights Settings
-comix/.gitignore
-@wweiss wweiss chore: improve build configuration
-2c21f38 3 days ago
-74 lines (56 sloc)  1.09 KB
-  
 # Logs
 *.log
 npm-debug.log*
@@ -89,3 +68,4 @@ website/build
 website/i18n
 docs/api
 reports
+.vscode
