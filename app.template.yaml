@@ -1,5 +1,19 @@
 AWSTemplateFormatVersion: 2010-09-09
 Transform: AWS::Serverless-2016-10-31
+
+Metadata:
+  AWS::ServerlessRepo::Application:
+    Name: TweetEventSource
+    Description: "A serverless app that periodically polls the public Twitter API with a predefined search query and invokes a given lambda function to process new tweets."
+    Author: William Weiss
+    SpdxLicenseId: MIT
+    LicenseUrl: LICENSE
+    ReadmeUrl: README.md
+    Labels: ['lambda','events','polling','source','twitter','tweet','api','search']
+    HomePageUrl: https://github.com/wweiss/aws-serverless-tweet-event-source
+    SemanticVersion: 0.0.1
+    SourceCodeUrl: https://github.com/wweiss/aws-serverless-tweet-event-source
+
 Parameters:
   EncryptedConsumerApiKey:
     Type: String

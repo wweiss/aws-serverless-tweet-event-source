@@ -17,8 +17,8 @@
     "test": "gulp test --clean",
     "test-integ": "gulp test-integ --clean",
     "build": "gulp --clean --production",
-    "package": "yarn build && gulp cloudformation-package",
-    "deploy": "yarn package && gulp cloudformation-deploy",
+    "package": "yarn build && gulp sam-package",
+    "publish:aws": "yarn build && gulp sam-package-publish",
     "preversion": "yarn build",
     "version": "git add -A .",
     "postversion": "git push && git push --tags"
