@@ -18,7 +18,7 @@
     "test-integ": "gulp test-integ --clean",
     "build": "gulp --clean --production",
     "package": "gulp sam-package",
-    "publish:aws": "gulp sam-package-publish",
+    "publish:aws": "gulp sam-publish",
     "release": "standard-version"
   },
   "standard-version": {
