@@ -1,6 +1,6 @@
 {
   "name": "aws-serverless-tweet-event-source",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "A serverless app that periodically polls the public Twitter API with a predefined search query and invokes a given lambda function to process new tweets.",
   "main": "index.js",
   "author": "William Weiss <william@codification.org>",
