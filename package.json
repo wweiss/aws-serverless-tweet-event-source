@@ -35,7 +35,8 @@
   "dependencies": {
     "@codification/cutwater-core": "^0.x",
     "@codification/cutwater-logging": "^0.x",
-    "got": "^8.3.0"
+    "got": "^8.3.0",
+    "node-forge": "^1.0.0"
   },
   "devDependencies": {
     "@codification/cutwater-build-aws": "^0.x",
